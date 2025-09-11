@@ -23,7 +23,7 @@ export default {
       directory: './src/config/db/migrations',
       tableName: 'knex_migrations',
       extension: 'js',
-      // stub: path.join(__dirname, 'migration.stub.js'), this is use to create a migration template
+      stub: path.join(__dirname, 'migration.stub.js')
     },
     seeds: {
       directory: './db/seeds'

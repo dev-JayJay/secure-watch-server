@@ -11,5 +11,8 @@
     "outDir": "./dist",
     "emitDecoratorMetadata": true
   },
-  "include": ["./src/*"]
+  "include": ["./src/*"],
+    "ts-node": {
+    "esm": true
+  }
 }
