@@ -1,6 +1,7 @@
 
-import dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
+
 import path from 'path';
 import { fileURLToPath } from 'url';
 
