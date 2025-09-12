@@ -1,3 +1,5 @@
+import { table } from "console";
+
 export async function up(knex) {
   // TODO: Write migration logic here
   return knex.schema.createTable("incidents", (table) => {

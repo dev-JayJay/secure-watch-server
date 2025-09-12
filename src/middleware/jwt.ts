@@ -27,7 +27,7 @@ export function authenticateToken(
 
   if (!token) {
     return res.status(StatusCodes.UNAUTHORIZED).json({
-      message: 'No token provided',
+      message: 'Unauthorized no token provided',
       status: 'error',
       data: null,
     });
