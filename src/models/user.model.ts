@@ -14,7 +14,8 @@ export class UserModel {
     private tableName = 'users';
 
     async createUser(user: Omit<User, 'id' | 'role' | 'created_at' | 'updated_at'>): Promise<User> {
-        const [newUser] = await knex(this.tableName).insert(user).returning('*');
+        const [newUserId] = await knex(this.tableName).insert(user);
+        const newUser = await knex(this.tableName).where({ id: newUserId }).first();
         return newUser;
     }
 
