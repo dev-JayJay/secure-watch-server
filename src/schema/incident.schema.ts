@@ -23,3 +23,7 @@ export const IncidentSchema = z.object({
     longitude: z.string().optional(),
     reported_by: z.number(),
 });
+
+export const updateIncidentSchema = IncidentSchema.partial().extend({
+    id: z.number(),
+}); 
