@@ -1,7 +1,7 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret'; 
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
+const JWT_SECRET = process.env.JWT_SECRET || "default_secret";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1h";
 
 interface JwtPayload {
   id: number;
@@ -10,6 +10,12 @@ interface JwtPayload {
 }
 
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN } as jwt.SignOptions);
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+  } as jwt.SignOptions);
+}
 
+export function extractToken(token: string): JwtPayload {
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    return decoded;
 }
