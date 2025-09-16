@@ -40,7 +40,21 @@ export class IncidentController {
     }
 
     static async getAllIncidents(req: Request, res: Response) {
+        const latitude = req.query.latitude as string | undefined;
+        const longitude = req.query.longitude as string | undefined;
+        const location = req.query.location as string | undefined;
+
         try {
+
+            if (latitude || longitude || location) {
+                const incidents = incidentModel.getIncidentByLocation(longitude, latitude, location);
+                return res.status(StatusCodes.OK).json({
+                    message: 'Incidents retrieved successfully',
+                    status: 'success',
+                    data: incidents
+                });
+            }
+
             const incidents = await incidentModel.getAllIncidents();
             return res.status(StatusCodes.OK).json({
                 message: 'Incidents retrieved successfully',

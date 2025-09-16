@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { SOSModel } from "../models/sos.model.js";
 import { StatusCodes } from "http-status-codes";
 import { createSosSchema, updateSosSchema } from "../schema/sos.schema.js";
-import { extractToken } from "utils/jwt.js";
+import { extractToken } from "../utils/jwt.js";
 
 
 
