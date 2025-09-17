@@ -37,11 +37,13 @@ export class IncidentModel {
     }
 
     async getIncidentByLocation(longitude?: string, latitude?: string, location?: string): Promise<Incident[]> {
-        const query = knex(this.tableName).select('*')
-            if (longitude?.trim()) query.where('longitude', longitude.trim());
-            if (latitude?.trim()) query.where('latitude', latitude.trim());
-            if (location?.trim()) query.where('location', location.trim());
-        return await query;
+        const query = knex(this.tableName);
+        if (longitude) query.where('longitude', longitude);
+        if (latitude) query.where('latitude', latitude);
+        if (location) query.where('location', location);
+
+        const incidents = await query;
+        return incidents;
     }
 
     async updateIncident(id: number, updates: Partial<Omit<Incident, 'id' | 'created_at' | 'updated_at'>>): Promise<Incident | undefined> {
