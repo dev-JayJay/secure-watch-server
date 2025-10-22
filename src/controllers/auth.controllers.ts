@@ -1,7 +1,9 @@
-import { Request, response, Response } from "express";
+import bcrypt from 'bcryptjs';
+import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { UserModel } from "../models/user.model.js"
 import { loginSchema, createUserSchema, forgotPasswordSchema } from "../schema/auth.schema.js";
+import { generateToken } from '../utils/jwt.js';
 
 
 const userModel = new UserModel();
@@ -17,19 +19,33 @@ export class AuthController {
                     data: null
                 })
             }
+
             const { email, password } = parseResult.data;
             const user = await userModel.getUserByEmail(email);
-            if (!user || user.password !== password) {
+            if (!user) {
                 return res.status(StatusCodes.UNAUTHORIZED).json({
                     message: 'Invalid email or password',
                     status: 'error',
                     data: null
                 });
             }
+
+            const isPasswordValid = await bcrypt.compare(password, user?.password || '');
+            if (!isPasswordValid) {
+                return res.status(StatusCodes.UNAUTHORIZED).json({
+                    message: 'Invalid email or password',
+                    status: 'error',
+                    data: null
+                });
+            }
+
+            const token = generateToken({ id: user.id!, email: user.email, role: user.role || 'user' });
+
             return res.status(StatusCodes.OK).json({
                 message: 'Login successful',
                 status: 'success',
                 data: {
+                    token,
                     id: user.id,
                     fullName: user.fullname,
                     email: user.email,
@@ -37,7 +53,12 @@ export class AuthController {
                 }
             });
         } catch (error) {
-
+            console.error("this is the server error: ", error);
+            res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+                message: 'Internal server error',
+                status: 'error',
+                data: null
+            });
         }
     }
 
@@ -46,7 +67,7 @@ export class AuthController {
             const parseResult = createUserSchema.safeParse(req.body);
             if (!parseResult.success) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
-                    message: 'Invalid input',
+                    message: 'All fields are required and must be valid',
                     status: 'error',
                     data: null
                 });
@@ -55,15 +76,16 @@ export class AuthController {
             const { fullName, email, password } = parseResult.data;
             const existingUser = await userModel.getUserByEmail(email);
             if (existingUser) {
-                response.status(StatusCodes.CONFLICT).json({
+                return res.status(StatusCodes.CONFLICT).json({
                     message: 'Email already in use',
                     status: 'error',
                     data: null
                 });
             }
 
+            const hashedPassword = await bcrypt.hash(password, 10);
 
-            const newUser = await userModel.createUser({ fullname: fullName, email, password });
+            const newUser = await userModel.createUser({ fullname: fullName, email, password: hashedPassword });
             return res.status(StatusCodes.CREATED).json({
                 message: 'User created successfully',
                 status: 'success',
@@ -76,7 +98,9 @@ export class AuthController {
                     updated_at: newUser.updated_at,
                 }
             });
-        } catch (error) {
+
+        } catch (error: unknown) {
+            console.log("this is the server error: ", error);
             res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
                 status: 'error',
@@ -88,7 +112,7 @@ export class AuthController {
 
     static async forgotPassword(req: Request, res: Response) {
         try {
-            
+
             const parseResult = forgotPasswordSchema.safeParse(req.body);
             if (!parseResult.success) {
                 return res.status(StatusCodes.BAD_REQUEST).json({

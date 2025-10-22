@@ -5,7 +5,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 
-
+// middles wares
 const app = express();
 app.use(express.json());
 app.use(morgan("combined"));

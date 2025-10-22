@@ -4,7 +4,8 @@ export class UserModel {
         this.tableName = 'users';
     }
     async createUser(user) {
-        const [newUser] = await knex(this.tableName).insert(user).returning('*');
+        const [newUserId] = await knex(this.tableName).insert(user);
+        const newUser = await knex(this.tableName).where({ id: newUserId }).first();
         return newUser;
     }
     async getUserByEmail(email) {
