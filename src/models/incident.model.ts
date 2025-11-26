@@ -36,11 +36,12 @@ export class IncidentModel {
         return incidents;
     }
 
-    async getIncidentByLocation(longitude?: string, latitude?: string, location?: string): Promise<Incident[]> {
+    async getIncidentByLocation(longitude?: string, latitude?: string, location?: string, type?:string): Promise<Incident[]> {
         const query = knex(this.tableName);
         if (longitude) query.where('longitude', longitude);
         if (latitude) query.where('latitude', latitude);
         if (location) query.where('location', location);
+        if (type) query.where('type', type);
 
         const incidents = await query;
         return incidents;

@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import { StatusCodes } from "http-status-codes";
 import { UserModel } from "../models/user.model.js";
 import { loginSchema, createUserSchema, forgotPasswordSchema } from "../schema/auth.schema.js";
-import { generateToken } from 'utils/jwt.js';
+import { generateToken } from '../utils/jwt.js';
 const userModel = new UserModel();
 export class AuthController {
     static async login(req, res) {

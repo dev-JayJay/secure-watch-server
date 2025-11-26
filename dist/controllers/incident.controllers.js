@@ -1,16 +1,12 @@
-import { Request, Response } from 'express';
 import { StatusCodes } from 'http-status-codes';
 import { IncidentModel } from '../models/incident.model.js';
 import { IncidentSchema } from '../schema/incident.schema.js';
 import { extractToken } from '../utils/jwt.js';
 import { stripQuotes } from '../utils/format-inputs.js';
-
 const incidentModel = new IncidentModel();
-
 export class IncidentController {
-    static async createIncident(req: Request, res: Response) {
+    static async createIncident(req, res) {
         try {
-
             const parseResult = IncidentSchema.safeParse(req.body);
             if (!parseResult.success) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
@@ -19,18 +15,16 @@ export class IncidentController {
                     data: parseResult.error.flatten().fieldErrors
                 });
             }
-
             const { id: userId } = extractToken(req.headers.authorization?.split(' ')[1] || '');
-
             const { title, type, location, longitude, latitude, description, status, priority, reported_by } = parseResult.data;
-
             const newIncident = await incidentModel.createIncident({ title, type, location, longitude, latitude, description, status, priority, reported_by: userId });
             return res.status(StatusCodes.CREATED).json({
                 message: 'Incident created successfully',
                 status: 'success',
                 data: newIncident
             });
-        } catch (error) {
+        }
+        catch (error) {
             console.log('this is the error from the server creating an incident', error);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
@@ -39,32 +33,27 @@ export class IncidentController {
             });
         }
     }
-
-    static async getAllIncidents(req: Request, res: Response) {
-        const latitude = stripQuotes(req.query.latitude as string | undefined) ;
-        const longitude = stripQuotes(req.query.longitude as string | undefined) ;
-        const location = stripQuotes(req.query.location as string | undefined);
-        const type = stripQuotes(req.query.type as string | undefined);
-
+    static async getAllIncidents(req, res) {
+        const latitude = stripQuotes(req.query.latitude);
+        const longitude = stripQuotes(req.query.longitude);
+        const location = stripQuotes(req.query.location);
         try {
-            if (latitude || longitude || location || type) {
-                
-                const incidents = await incidentModel.getIncidentByLocation(longitude, latitude, location, type);
+            if (latitude || longitude || location) {
+                const incidents = await incidentModel.getIncidentByLocation(longitude, latitude, location);
                 return res.status(StatusCodes.OK).json({
                     message: 'Incidents retrieved successfully',
                     status: 'success',
                     data: incidents
                 });
-                
             }
-
             const incidents = await incidentModel.getAllIncidents();
             return res.status(StatusCodes.OK).json({
                 message: 'Incidents retrieved successfully',
                 status: 'success',
                 data: incidents
             });
-        } catch (error) {
+        }
+        catch (error) {
             console.log('this is the error from the server getting all incidents', error);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
@@ -73,8 +62,7 @@ export class IncidentController {
             });
         }
     }
-
-    static async getIncidentById(req: Request, res: Response) {
+    static async getIncidentById(req, res) {
         try {
             const incidentId = parseInt(req.params.id, 10);
             if (isNaN(incidentId)) {
@@ -84,7 +72,6 @@ export class IncidentController {
                     data: null
                 });
             }
-
             const incident = await incidentModel.getIncidentById(incidentId);
             if (!incident) {
                 return res.status(StatusCodes.NOT_FOUND).json({
@@ -93,14 +80,13 @@ export class IncidentController {
                     data: null
                 });
             }
-
             return res.status(StatusCodes.OK).json({
                 message: 'Incident retrieved successfully',
                 status: 'success',
                 data: incident
             });
-
-        } catch (error) {
+        }
+        catch (error) {
             console.log('this is the error from the server getting an incident by id', error);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
@@ -109,8 +95,7 @@ export class IncidentController {
             });
         }
     }
-
-    static async updateIncident(req: Request, res: Response) {
+    static async updateIncident(req, res) {
         try {
             const incidentId = parseInt(req.params.id, 10);
             if (isNaN(incidentId)) {
@@ -120,7 +105,6 @@ export class IncidentController {
                     data: null
                 });
             }
-
             const parseResult = IncidentSchema.partial().safeParse(req.body);
             if (!parseResult.success) {
                 return res.status(StatusCodes.BAD_REQUEST).json({
@@ -129,7 +113,6 @@ export class IncidentController {
                     data: parseResult.error.flatten().fieldErrors
                 });
             }
-
             const incident = await incidentModel.getIncidentById(incidentId);
             if (!incident) {
                 return res.status(StatusCodes.NOT_FOUND).json({
@@ -138,7 +121,6 @@ export class IncidentController {
                     data: null
                 });
             }
-
             const updates = parseResult.data;
             const updatedIncident = await incidentModel.updateIncident(incidentId, updates);
             return res.status(StatusCodes.OK).json({
@@ -146,8 +128,8 @@ export class IncidentController {
                 status: 'success',
                 data: updatedIncident
             });
-
-        } catch (error) {
+        }
+        catch (error) {
             console.log('this is the error from the server updating an incident', error);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
@@ -156,8 +138,7 @@ export class IncidentController {
             });
         }
     }
-
-    static async deleteIncident(req: Request, res: Response) {
+    static async deleteIncident(req, res) {
         try {
             const incidentId = parseInt(req.params.id, 10);
             if (isNaN(incidentId)) {
@@ -167,7 +148,6 @@ export class IncidentController {
                     data: null
                 });
             }
-
             const incident = await incidentModel.getIncidentById(incidentId);
             if (!incident) {
                 return res.status(StatusCodes.NOT_FOUND).json({
@@ -182,8 +162,8 @@ export class IncidentController {
                 status: 'success',
                 data: null
             });
-
-        } catch (error) {
+        }
+        catch (error) {
             console.log('this is the error from the server deleting an incident', error);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: 'Internal server error',
