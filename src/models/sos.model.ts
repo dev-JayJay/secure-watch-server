@@ -1,41 +1,52 @@
 import knex from '../config/db/knex.js';
 
 export interface SOS {
-    id?: number;
-    user_id: number;
-    message: string;
-    latitude: number;
-    longitude: number;
-    created_at?: Date;
-    updated_at?: Date;
+  id?: number;
+  user_id: number;
+  message: string;
+  latitude: number;
+  city: string;
+  longitude: number;
+  created_at?: Date;
+  updated_at?: Date;
 }
 
 export class SOSModel {
-    private tableName = 'sos';
+  private tableName = 'sos';
 
-    async createSOS(sos: Omit<SOS, 'id' | 'created_at' | 'updated_at'>): Promise<SOS> {
-        const [newSOSId] = await knex(this.tableName).insert(sos);
-        const newSOS = await knex(this.tableName).where({ id: newSOSId }).first();
-        return newSOS;
-    }
+  // Create a new SOS record
+  async createSOS(sos: Omit<SOS, 'id' | 'created_at' | 'updated_at'>): Promise<SOS> {
+    const [newSOS] = await knex(this.tableName)
+      .insert(sos)
+      .returning('*'); // PostgreSQL returns the inserted row
+    return newSOS;
+  }
 
-    async getSOSById(id: number): Promise<SOS | undefined> {
-        const sos = await knex(this.tableName).where({ id }).first();
-        return sos;
-    }
+  async getSOSById(id: number): Promise<SOS | undefined> {
+    return knex(this.tableName).where({ id }).first();
+  }
 
-    async getAllSOS(): Promise<SOS[]> {
-        const sosList = await knex(this.tableName).select('*');
-        return sosList;
-    }
+  async getAllSOS(): Promise<SOS[]> {
+    return knex(this.tableName).select('*');
+  }
 
-    async updateSOS(id: number, updates: Partial<Omit<SOS, 'id' | 'created_at' | 'updated_at'>>): Promise<SOS | undefined> {
-        await knex(this.tableName).where({id}).update(updates);
-        const updatedSOS = await knex(this.tableName).where({ id }).first();
-        return updatedSOS;
-    }
+  async updateSOS(
+    id: number,
+    updates: Partial<Omit<SOS, 'id' | 'created_at' | 'updated_at'>>
+  ): Promise<SOS | undefined> {
+    await knex(this.tableName).where({ id }).update(updates);
+    return knex(this.tableName).where({ id }).first();
+  }
 
-    async deleteSOS(id: number): Promise<void> {
-        await knex(this.tableName).where({ id }).del();
-    }
+  async deleteSOS(id: number): Promise<void> {
+    await knex(this.tableName).where({ id }).del();
+  }
+
+  // Returns users who have location and FCM token
+  async getUsersWithLocationAndToken() {
+    return knex('users')
+      .whereNotNull('latitude')
+      .whereNotNull('longitude')
+      .whereNotNull('fcm_token');
+  }
 }
