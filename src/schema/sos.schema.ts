@@ -9,6 +9,7 @@ export const createSosSchema = z.object({
     longitude: z.number({
         error: "Longitude is required",
     }),
+    city: z.string().optional(),
 });
 
 export const updateSosSchema = z.object({

@@ -11,23 +11,33 @@ const env = process.env.NODE_ENV || 'development';
 dotenv.config({ path: path.resolve(__dirname, `.env.${env}`) });
 
 export default {
-  [env]: {
+  development: {
     client: process.env.DB_CLIENT || 'mysql2',
     connection: {
-      host: process.env.DB_HOST,
+      host: process.env.DB_HOST || 'localhost',
       port: Number(process.env.DB_PORT) || 3306,
-      user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      database: process.env.DB_NAME
+      user: process.env.DB_USER || 'root',
+      password: process.env.DB_PASSWORD || '',
+      database: process.env.DB_NAME || 'secure_watch_db',
     },
     migrations: {
       directory: './src/config/db/migrations',
       tableName: 'knex_migrations',
       extension: 'js',
-      stub: path.join(__dirname, 'migration.stub.js')
+      stub: path.join(__dirname, 'migration.stub.js'),
     },
     seeds: {
-      directory: './db/seeds'
-    }
-  }
+      directory: './db/seeds',
+    },
+  },
+
+  production: {
+    client: process.env.DB_CLIENT || 'pg',
+    connection: process.env.DATABASE_URL,
+    migrations: {
+      directory: './src/config/db/migrations',
+      tableName: 'knex_migrations',
+    },
+    pool: { min: 0, max: 10 },
+  },
 };
