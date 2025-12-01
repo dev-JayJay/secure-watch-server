@@ -3,9 +3,11 @@ export class UserModel {
     constructor() {
         this.tableName = 'users';
     }
+    // Create a new user and return the inserted row
     async createUser(user) {
-        const [newUserId] = await knex(this.tableName).insert(user);
-        const newUser = await knex(this.tableName).where({ id: newUserId }).first();
+        const [newUser] = await knex(this.tableName)
+            .insert(user)
+            .returning('*'); // Postgres: returns the inserted row(s)
         return newUser;
     }
     async getUserByEmail(email) {
@@ -17,7 +19,22 @@ export class UserModel {
         return user;
     }
     async getAllUsers() {
-        const users = await knex(this.tableName).select('*');
-        return users;
+        return knex(this.tableName).select('*');
+    }
+    async updateLocation(userId, latitude, longitude) {
+        await knex(this.tableName)
+            .where({ id: userId })
+            .update({ latitude, longitude });
+    }
+    async updateFcmToken(userId, fcm_token) {
+        await knex(this.tableName)
+            .where({ id: userId })
+            .update({ fcm_token });
+    }
+    async getUsersWithLocationAndToken() {
+        return knex(this.tableName)
+            .whereNotNull('latitude')
+            .whereNotNull('longitude')
+            .whereNotNull('fcm_token');
     }
 }

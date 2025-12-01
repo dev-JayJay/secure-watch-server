@@ -2,7 +2,11 @@ import { SOSModel } from "../models/sos.model.js";
 import { StatusCodes } from "http-status-codes";
 import { createSosSchema, updateSosSchema } from "../schema/sos.schema.js";
 import { extractToken } from "../utils/jwt.js";
+import { UserModel } from "../models/user.model.js";
+import { getDistance } from "../utils/distance.js";
+import { sendExpoNotifications } from "../utils/expoPush.js";
 const sosModel = new SOSModel();
+const userModel = new UserModel();
 export class SOSController {
     static async createSOS(req, res) {
         try {
@@ -19,17 +23,53 @@ export class SOSController {
             const newSOS = await sosModel.createSOS({
                 message,
                 longitude,
+                city: "",
                 latitude,
                 user_id: userId
             });
+            // Fetch all users who have Expo push tokens
+            const users = await userModel.getUsersWithLocationAndToken();
+            const nearbyUsers = users.filter(u => {
+                if (!u.latitude || !u.longitude || !u.fcm_token)
+                    return false;
+                const distance = getDistance(latitude, longitude, u.latitude, u.longitude);
+                return distance <= 5; // km
+            });
+            // Notification payload for nearby users
+            const payload = {
+                notification: {
+                    title: "🚨 SOS Alert Nearby",
+                    body: message || "Someone nearby needs help!",
+                },
+                data: {
+                    sosId: newSOS.id?.toString() ?? '',
+                    latitude: latitude.toString(),
+                    longitude: longitude.toString()
+                }
+            };
+            const tokens = nearbyUsers.map(u => u.fcm_token).filter((t) => typeof t === "string");
+            if (tokens.length > 0) {
+                await sendExpoNotifications(tokens, payload);
+            }
+            // Notify SOS creator
+            const creator = await userModel.getUserById(userId);
+            if (creator?.fcm_token) {
+                await sendExpoNotifications([creator.fcm_token], {
+                    notification: {
+                        title: "✔ SOS Sent",
+                        body: "Your SOS alert was sent to nearby users"
+                    },
+                    data: { sosId: newSOS.id?.toString() ?? "" }
+                });
+            }
             return res.status(StatusCodes.CREATED).json({
-                message: "SOS created successfully",
+                message: "SOS created and notifications sent",
                 status: "success",
                 data: newSOS
             });
         }
-        catch (error) {
-            console.log("this is the error when creating sos", error);
+        catch (err) {
+            console.log("SOS ERROR:", err);
             return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
                 message: "Internal server error",
                 status: "error",

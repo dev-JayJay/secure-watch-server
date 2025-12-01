@@ -3,20 +3,27 @@ export class commentModel {
     constructor() {
         this.tableName = "comments";
     }
-    async createComment(Comment) {
-        const [newCommentId] = await knex(this.tableName).insert(Comment);
-        const comment = await knex(this.tableName).where({ id: newCommentId }).first();
+    // Create a new comment and return the inserted row
+    async createComment(commentData) {
+        const [comment] = await knex(this.tableName)
+            .insert(commentData)
+            .returning('*'); // PostgreSQL returns the inserted row
         return comment;
     }
-    async getPostComments(post_id) {
-        const comments = await knex(this.tableName).where({ "id": post_id });
-        return comments;
+    // Get all comments for a specific incident, joined with user info
+    async getPostComments(incident_id) {
+        return knex(this.tableName)
+            .join("users", "comments.user_id", "users.id")
+            .select("comments.id", "comments.comment", "comments.incident_id", "comments.user_id", "users.fullname as username", "comments.created_at")
+            .where({ incident_id })
+            .orderBy("comments.created_at", "desc");
     }
-    async getCommnetById(id) {
-        const comment = await knex(this.tableName).where({ id }).first();
-        return comment;
+    // Get a single comment by ID
+    async getCommentById(id) {
+        return knex(this.tableName).where({ id }).first();
     }
+    // Delete a comment
     async deleteComment(id) {
-        const comment = await knex(this.tableName).where({ id }).del();
+        await knex(this.tableName).where({ id }).del();
     }
 }

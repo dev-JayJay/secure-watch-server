@@ -3,20 +3,28 @@ export class IncidentModel {
     constructor() {
         this.tableName = 'incidents';
     }
-    async createIncident(Incident) {
-        const [newIncidentId] = await knex(this.tableName).insert(Incident);
-        const newIncident = await knex(this.tableName).where({ id: newIncidentId }).first();
+    // Create a new incident and return it
+    async createIncident(incident) {
+        const [newIncident] = await knex(this.tableName)
+            .insert(incident)
+            .returning('*'); // PostgreSQL returns the inserted row
         return newIncident;
     }
     async getIncidentById(id) {
-        const incident = await knex(this.tableName).where({ id }).first();
-        return incident;
+        return knex(this.tableName).where({ id }).first();
     }
     async getAllIncidents() {
-        const incidents = await knex(this.tableName).select('*');
-        return incidents;
+        return knex(this.tableName)
+            .select('*')
+            .orderBy('reported_at', 'desc');
     }
-    async getIncidentByLocation(longitude, latitude, location) {
+    async latestIncidents() {
+        return knex(this.tableName)
+            .select('*')
+            .orderBy('reported_at', 'desc')
+            .limit(5);
+    }
+    async getIncidentByLocation(longitude, latitude, location, type) {
         const query = knex(this.tableName);
         if (longitude)
             query.where('longitude', longitude);
@@ -24,13 +32,13 @@ export class IncidentModel {
             query.where('latitude', latitude);
         if (location)
             query.where('location', location);
-        const incidents = await query;
-        return incidents;
+        if (type)
+            query.where('type', type);
+        return query;
     }
     async updateIncident(id, updates) {
         await knex(this.tableName).where({ id }).update(updates);
-        const updatedIncident = await knex(this.tableName).where({ id }).first();
-        return updatedIncident;
+        return knex(this.tableName).where({ id }).first();
     }
     async deleteIncident(id) {
         await knex(this.tableName).where({ id }).del();

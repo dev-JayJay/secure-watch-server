@@ -3,25 +3,31 @@ export class SOSModel {
     constructor() {
         this.tableName = 'sos';
     }
+    // Create a new SOS record
     async createSOS(sos) {
-        const [newSOSId] = await knex(this.tableName).insert(sos);
-        const newSOS = await knex(this.tableName).where({ id: newSOSId }).first();
+        const [newSOS] = await knex(this.tableName)
+            .insert(sos)
+            .returning('*'); // PostgreSQL returns the inserted row
         return newSOS;
     }
     async getSOSById(id) {
-        const sos = await knex(this.tableName).where({ id }).first();
-        return sos;
+        return knex(this.tableName).where({ id }).first();
     }
     async getAllSOS() {
-        const sosList = await knex(this.tableName).select('*');
-        return sosList;
+        return knex(this.tableName).select('*');
     }
     async updateSOS(id, updates) {
         await knex(this.tableName).where({ id }).update(updates);
-        const updatedSOS = await knex(this.tableName).where({ id }).first();
-        return updatedSOS;
+        return knex(this.tableName).where({ id }).first();
     }
     async deleteSOS(id) {
         await knex(this.tableName).where({ id }).del();
+    }
+    // Returns users who have location and FCM token
+    async getUsersWithLocationAndToken() {
+        return knex('users')
+            .whereNotNull('latitude')
+            .whereNotNull('longitude')
+            .whereNotNull('fcm_token');
     }
 }
